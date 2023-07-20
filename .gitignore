@@ -5,3 +5,5 @@ chess_games.csv
 .venv
 
 .vscode
+
+__pycache__

@@ -1,9 +1,19 @@
 import re
 import pandas as pd
+from datetime import timedelta
 
 from prefect import flow, task
+from prefect.tasks import task_input_hash
 
-pd.set_option('display.max_columns', None)
+# pd.set_option('display.max_columns', None)
+
+
+@task(log_prints=True, timeout_seconds=30,
+      cache_key_fn=task_input_hash, cache_expiration=timedelta(days=1))
+def extract_data() -> pd.DataFrame:
+    df = pd.read_csv('chess_games.csv', nrows=1000000,
+                    usecols=['Event', 'Result', 'UTCDate', 'Opening', 'Termination', 'AN']) # chunksize=100000, index_col=''
+    return df
 
 
 @task(log_prints=True)
@@ -124,16 +134,17 @@ def create_moves_table(df: pd.DataFrame) -> pd.DataFrame:
     return df_moves_total
 
 
-@task(name='extract-data', log_prints=True)
-def extract_data() -> pd.DataFrame:
-    df = pd.read_csv('chess_games.csv', nrows=100_000,
-                    usecols=['Event', 'Result', 'UTCDate', 'Opening', 'Termination', 'AN']) # chunksize=100000, index_col=''
-    return df
+@task(log_prints=True)
+def load_data() -> None: #: pd.DataFrame
+    print('Finish')
 
 
-@flow(name='transform-data', log_prints=True)
-def transform_data(df): #: pd.DataFrame
+@flow(name='ETL_chess', log_prints=True)
+def main() -> None:
+    #EXTRACT
+    df = extract_data()
 
+    #TRANSFORM
     df = remove_useless_results(df)
     df = change_column_datatype(df)
 
@@ -147,21 +158,9 @@ def transform_data(df): #: pd.DataFrame
     df = reset_df_index(df)
     df = parse_moves_to_list(df)
     #df_moves_total = create_moves_table(df)
-    df_moves_total = pd.DataFrame()
-
-    return df, df_moves_total
-
-
-@flow(name='load-data', log_prints=True)
-def load_data(df, df_moves_total) -> None: #: pd.DataFrame
-    print('Finish')
-
-
-@flow(name='main-flow', log_prints=True, timeout_seconds=30)
-def main():
-    extracted_df = extract_data()
-    #df, df_moves_total = transform_data(extracted_df)
-    #load_data(df, df_moves_total)
+    
+    #LOAD
+    load_data()
 
 
 if __name__ == '__main__':
