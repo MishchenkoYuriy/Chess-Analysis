@@ -5,8 +5,6 @@ from datetime import timedelta
 from prefect import flow, task
 from prefect.tasks import task_input_hash
 
-# pd.set_option('display.max_columns', None)
-
 
 @task(log_prints=True, timeout_seconds=30,
       cache_key_fn=task_input_hash, cache_expiration=timedelta(days=1))
@@ -20,35 +18,6 @@ def extract_data() -> pd.DataFrame:
 def remove_useless_results(df: pd.DataFrame) -> pd.DataFrame:
     filt = (df['Result'] != '*') & (df['Termination'] != 'Abandoned') & (df['Termination'] != 'Rules infraction')
     df = df[filt]
-    return df
-
-
-@task(log_prints=True)
-def change_column_datatype(df: pd.DataFrame) -> pd.DataFrame:
-    df['UTCDate'] = pd.to_datetime(df['UTCDate'])
-    return df
-
-
-@task(log_prints=True) # change the order
-def create_tournament_column(df: pd.DataFrame) -> pd.DataFrame:
-    df['Tournament'] = df['Event'].str.contains('tournament')
-    return df
-
-
-@task(log_prints=True) # change the order
-def rename_event_values(df: pd.DataFrame) -> pd.DataFrame:
-    df['Event'] = df['Event'].map({' Classical ': 'Classical',
-                                    ' Blitz ': 'Blitz',
-                                    ' Blitz tournament ': 'Blitz',
-                                    ' Correspondence ': 'Classical',
-                                    ' Classical tournament ': 'Classical',
-                                    ' Bullet tournament ': 'Bullet',
-                                    ' Bullet ': 'Bullet',
-                                    'Blitz tournament ': 'Blitz',
-                                    'Bullet ': 'Bullet',
-                                    'Classical ': 'Classical',
-                                    'Blitz ': 'Blitz'
-                                    })
     return df
 
 
@@ -80,6 +49,35 @@ def remove_rare_openings(df: pd.DataFrame) -> pd.DataFrame:
 @task(log_prints=True)
 def reset_df_index(df: pd.DataFrame) -> pd.DataFrame:
     df = df.reset_index(drop=True)
+    return df
+
+
+@task(log_prints=True)
+def create_tournament_column(df: pd.DataFrame) -> pd.DataFrame:
+    df['Tournament'] = df['Event'].str.contains('tournament')
+    return df
+
+
+@task(log_prints=True)
+def rename_event_values(df: pd.DataFrame) -> pd.DataFrame:
+    df['Event'] = df['Event'].map({' Classical ': 'Classical',
+                                    ' Blitz ': 'Blitz',
+                                    ' Blitz tournament ': 'Blitz',
+                                    ' Correspondence ': 'Classical',
+                                    ' Classical tournament ': 'Classical',
+                                    ' Bullet tournament ': 'Bullet',
+                                    ' Bullet ': 'Bullet',
+                                    'Blitz tournament ': 'Blitz',
+                                    'Bullet ': 'Bullet',
+                                    'Classical ': 'Classical',
+                                    'Blitz ': 'Blitz'
+                                    })
+    return df
+
+
+@task(log_prints=True)
+def change_column_datatype(df: pd.DataFrame) -> pd.DataFrame:
+    df['UTCDate'] = pd.to_datetime(df['UTCDate'])
     return df
 
 
@@ -130,36 +128,36 @@ def create_moves_table(df: pd.DataFrame) -> pd.DataFrame:
         
         df_moves_total = pd.concat([df_moves_total, df_moves])
     
-    # print('Done')
     return df_moves_total
 
 
 @task(log_prints=True)
-def load_data() -> None: #: pd.DataFrame
+def load_data() -> None:
     print('Finish')
 
 
 @flow(name='ETL_chess', log_prints=True)
 def main() -> None:
-    #EXTRACT
+    # EXTRACT
     df = extract_data()
 
-    #TRANSFORM
+    # TRANSFORM
+    # filter dataframe
     df = remove_useless_results(df)
-    df = change_column_datatype(df)
-
-    df = create_tournament_column(df)
-    df = rename_event_values(df)
-
     df = remove_short_matches(df)
     df = remove_an_values(df)
     df = remove_rare_openings(df)
 
+    # expand and rearrange dataframe
     df = reset_df_index(df)
-    df = parse_moves_to_list(df)
-    #df_moves_total = create_moves_table(df)
+    df = create_tournament_column(df)
+    df = rename_event_values(df)
     
-    #LOAD
+    df = change_column_datatype(df)
+    df = parse_moves_to_list(df)
+    # df_moves_total = create_moves_table(df)
+    
+    # LOAD
     load_data()
 
 
