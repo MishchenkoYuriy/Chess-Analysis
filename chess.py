@@ -2,47 +2,59 @@ import re
 import pandas as pd
 from datetime import timedelta
 
-from prefect import flow, task
+from prefect import flow, task, get_run_logger
 from prefect.tasks import task_input_hash
 
 
 @task(log_prints=True, timeout_seconds=30,
       cache_key_fn=task_input_hash, cache_expiration=timedelta(days=1))
 def extract_data() -> pd.DataFrame:
+    logger = get_run_logger()
     df = pd.read_csv('chess_games.csv', nrows=1000000,
                     usecols=['Event', 'Result', 'UTCDate', 'Opening', 'Termination', 'AN']) # chunksize=100000, index_col=''
+    logger.info(f"{len(df)} rows was extracted")
     return df
 
 
 @task(log_prints=True)
 def remove_useless_results(df: pd.DataFrame) -> pd.DataFrame:
+    logger = get_run_logger()
     filt = (df['Result'] != '*') & (df['Termination'] != 'Abandoned') & (df['Termination'] != 'Rules infraction')
+    logger.info(f"{len(df)-len(df[filt])} rows was removed")
     df = df[filt]
+    logger.info(f"{len(df)} rows left")
     return df
 
 
 @task(log_prints=True)
 def remove_short_matches(df: pd.DataFrame) -> pd.DataFrame:
+    logger = get_run_logger()
     filt = df["AN"].apply(len) > 50
-    # print(f"{len(df)-len(df[filt])} rows was removed")
+    logger.info(f"{len(df)-len(df[filt])} rows was removed")
     df = df[filt]
+    logger.info(f"{len(df)} rows left")
     return df
 
 @task(log_prints=True)
 def remove_an_values(df: pd.DataFrame) -> pd.DataFrame:
+    logger = get_run_logger()
     filt = ~df['AN'].str.contains('\[%eval')
-    # print(f"{len(df)-len(df[filt])} rows was removed")
+    logger.info(f"{len(df)-len(df[filt])} rows was removed")
     df = df[filt]
+    logger.info(f"{len(df)} rows left")
     return df
 
 
 @task(log_prints=True)
 def remove_rare_openings(df: pd.DataFrame) -> pd.DataFrame:
+    logger = get_run_logger()
     vc = df['Opening'].value_counts()
     vals_to_remove = vc[vc < 1500].index.values
     df['Opening'].loc[df['Opening'].isin(vals_to_remove)] = 'REMOVE'
     filt = df['Opening'] != 'REMOVE'
+    logger.info(f"{len(df)-len(df[filt])} rows was removed")
     df = df[filt]
+    logger.info(f"{len(df)} rows left")
     return df
 
 
