@@ -6,11 +6,11 @@ from prefect import flow, task, get_run_logger
 from prefect.tasks import task_input_hash
 
 
-@task(log_prints=True, timeout_seconds=30,
-      cache_key_fn=task_input_hash, cache_expiration=timedelta(days=1))
+@task(log_prints=True, timeout_seconds=30)
+      # cache_key_fn=task_input_hash, cache_expiration=timedelta(days=1))
 def extract_data() -> pd.DataFrame:
     logger = get_run_logger()
-    df = pd.read_csv('chess_games.csv', nrows=1000000,
+    df = pd.read_csv('chess_games.csv', nrows=50000,
                     usecols=['Event', 'Result', 'UTCDate', 'Opening', 'Termination', 'AN']) # chunksize=100000, index_col=''
     logger.info(f"{len(df)} rows was extracted")
     return df
@@ -143,6 +143,32 @@ def create_moves_table(df: pd.DataFrame) -> pd.DataFrame:
     return df_moves_total
 
 
+def create_moves_table_no_fk_1(row: list):
+    #df_moves_total = pd.DataFrame()
+    df_moves = pd.DataFrame()
+    
+    for move in range(len(row)):
+        tuple_move = tuple([999] + row[move].split(' ')) # ('0','1','e4','b6')
+        
+        if len(tuple_move) == 3:
+            tuple_move = tuple_move + (None, ) # last move ('0', '38', 'Rfd1', None)
+        elif len(tuple_move) < 3 or len(tuple_move) > 4:
+            print(f'Unexpected number of elements after split: {len(tuple_move)} elements in {tuple_move} in {row} row')
+        
+        df_temp = pd.DataFrame([tuple_move], columns=['match_id', 'move_num', 'white_move', 'black_move']) # parse each list element
+        df_moves = pd.concat([df_moves, df_temp]) # add to df for this row (match)
+    
+    #df_moves_total = pd.concat([df_moves_total, df_moves])
+
+    return df_moves
+
+
+@task(log_prints=True)
+def create_moves_table_no_fk(df: pd.DataFrame) -> pd.DataFrame:
+    df_moves_total = df["AN"].apply(create_moves_table_no_fk_1)
+    return df_moves_total
+
+
 @task(log_prints=True)
 def load_data() -> None:
     print('Finish')
@@ -158,7 +184,7 @@ def main() -> None:
     df = remove_useless_results(df)
     df = remove_short_matches(df)
     df = remove_an_values(df)
-    df = remove_rare_openings(df)
+    # df = remove_rare_openings(df)
 
     # expand and rearrange dataframe
     df = reset_df_index(df)
@@ -168,6 +194,7 @@ def main() -> None:
     df = change_column_datatype(df)
     df = parse_moves_to_list(df)
     # df_moves_total = create_moves_table(df)
+    df_moves_total = create_moves_table_no_fk(df)
     
     # LOAD
     load_data()
