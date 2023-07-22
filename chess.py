@@ -88,7 +88,10 @@ def rename_event_values(df: pd.DataFrame) -> pd.DataFrame:
 
 
 @task(log_prints=True)
-def change_column_datatype(df: pd.DataFrame) -> pd.DataFrame:
+def change_columns_datatype(df: pd.DataFrame) -> pd.DataFrame:
+    df['Event'] = df['Event'].astype('category')
+    df['Result'] = df['Result'].astype('category')
+    df['Termination'] = df['Termination'].astype('category')
     df['UTCDate'] = pd.to_datetime(df['UTCDate'])
     return df
 
@@ -191,7 +194,7 @@ def main() -> None:
     df = create_tournament_column(df)
     df = rename_event_values(df)
     
-    df = change_column_datatype(df)
+    df = change_columns_datatype(df)
     df = parse_moves_to_list(df)
     # df_moves_total = create_moves_table(df)
     df_moves_total = create_moves_table_no_fk(df)
