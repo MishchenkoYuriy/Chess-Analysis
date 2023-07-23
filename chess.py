@@ -65,7 +65,7 @@ def reset_df_index(df: pd.DataFrame) -> pd.DataFrame:
 
 
 @task(log_prints=True)
-def create_tournament_column(df: pd.DataFrame) -> pd.DataFrame:
+def add_tournament_column(df: pd.DataFrame) -> pd.DataFrame:
     df['Tournament'] = df['Event'].str.contains('tournament')
     return df
 
@@ -191,7 +191,7 @@ def main() -> None:
 
     # expand and rearrange dataframe
     df = reset_df_index(df)
-    df = create_tournament_column(df)
+    df = add_tournament_column(df)
     df = rename_event_values(df)
     
     df = change_columns_datatype(df)
