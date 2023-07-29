@@ -1,11 +1,13 @@
 import numpy as np
 import pandas as pd
-from sqlalchemy import create_engine
 # from datetime import timedelta
 
 from prefect import flow, task, get_run_logger
 # from prefect.tasks import task_input_hash
 from prefect_sqlalchemy import SqlAlchemyConnector
+
+from prefect_gcp import GcpCredentials
+from prefect_gcp.bigquery import bigquery_load_file
 
 
 temp_moves_total = []
@@ -139,7 +141,6 @@ def populate_moves_total(row) -> None:
         temp_moves_total.append(tuple_move)
 
 
-# @task(log_prints=True)
 def create_df_moves(temp_moves_total: list[tuple]) -> pd.DataFrame:
     df_moves = pd.DataFrame(temp_moves_total, columns=['game_id', 'move_num', 'player', 'move'])
     return df_moves
@@ -148,30 +149,11 @@ def create_df_moves(temp_moves_total: list[tuple]) -> pd.DataFrame:
 @task(log_prints=True)
 def create_moves_total(df: pd.DataFrame) -> pd.DataFrame:
     logger = get_run_logger()
-    # temp_moves_total = [] # template for data frame
     df.apply(populate_moves_total, axis = 1)
     logger.info(f"{len(df)} rows was parsed to {len(temp_moves_total)} moves")
     
     df_moves = create_df_moves(temp_moves_total)
     return df_moves
-
-
-# @task(log_prints=True)
-# def create_moves_total_iloc(df: pd.DataFrame) -> list[tuple]:
-#     logger = get_run_logger()
-#     temp_moves_total = [] # template for data frame
-#     for i_row in df.index:
-#         s = df['an'].iloc[i_row]
-#         moves_list = s.split(' ')
-#         for i, move in enumerate(moves_list, start=1):
-#             player = 2 if i % 2 == 0 else 1
-#             tuple_move = tuple([i_row] + [i] + [player] + [move])
-#             temp_moves_total.append(tuple_move)
-#     logger.info(f"{len(temp_moves_total)} wow")
-
-#     df_moves = create_df_moves(temp_moves_total)
-#     # df_moves = pd.DataFrame(temp_moves_total, columns=['game_id', 'move_num', 'player', 'move'])
-#     return df_moves
 
 
 @task(log_prints=True)
@@ -315,6 +297,14 @@ def main() -> None:
 
     load_data_to_csv(df, 'tableau_chess_games.csv')
     load_data_to_csv(df_moves, 'tableau_chess_moves.csv')
+
+    '''
+    bigquery_load_file is build-in prefect task, so I decided to call it here
+    alternatively, you can run it inside other tasks by using 'bigquery_load_file.fn'
+    '''
+    gcp_credentials = GcpCredentials.load("gcp-cred")
+    bigquery_load_file(dataset = "marts", table = 'chess_games', path = 'tableau_chess_games.csv', gcp_credentials = gcp_credentials)
+    bigquery_load_file(dataset = "marts", table = 'chess_moves', path = 'tableau_chess_moves.csv', gcp_credentials = gcp_credentials)
 
 
 if __name__ == '__main__':
