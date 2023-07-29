@@ -1,5 +1,5 @@
 chess_postgres_data
-chess_games.csv
+*.csv
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
