@@ -10,17 +10,16 @@ from prefect import flow, task, get_run_logger
 temp_moves_total = []
 
 
-@task(log_prints=True, timeout_seconds=30)
-      # cache_key_fn=task_input_hash, cache_expiration=timedelta(days=1))
+@task(log_prints=True) # cache_key_fn=task_input_hash, cache_expiration=timedelta(days=1))
 def extract_data() -> pd.DataFrame:
     logger = get_run_logger()
-    df = pd.read_csv('chess_games.csv', nrows=100,
+    df = pd.read_csv('chess_games.csv', nrows=1000,
                     usecols=['Event', 'Result', 'UTCDate', 'Opening', 'Termination', 'AN'])
     logger.info(f"{len(df)} rows was extracted")
     return df
 
 
-@task(log_prints=True, timeout_seconds=30)
+@task(log_prints=True)
 def extract_data_by_chunks() -> pd.DataFrame:
     logger = get_run_logger()
     chess_game_list = []
@@ -29,7 +28,6 @@ def extract_data_by_chunks() -> pd.DataFrame:
         chess_game_list.append(chunk)
     df = pd.concat(chess_game_list)
     logger.info(f"{len(chess_game_list)*chunksize} rows was extracted")
-    chess_game_list = []
     return df
 
 
@@ -214,13 +212,12 @@ def add_piece_name_column(df_moves: pd.DataFrame) -> pd.DataFrame:
     df_moves['move'].str.startswith('Q') == True,
     df_moves['move'].str.startswith('R') == True,
     df_moves['move'].str.startswith('B') == True,
-    df_moves['move'].str.startswith('N') == True,
-    # df_moves['move'].str.match('[a-h]') == True # pawn don't have piece name in AN
+    df_moves['move'].str.startswith('N') == True
     ]
 
     piece_outputs = [1, 1, 2, 3, 4, 5] # 'king', 'king', 'queen', 'rook', 'bishop', 'knight'
 
-    piece_name = np.select(piece_conditions, piece_outputs, 6) # 'pawn'
+    piece_name = np.select(piece_conditions, piece_outputs, 6) # pawn don't have piece name in AN
     df_moves['piece_name'] = pd.Series(piece_name.astype(np.int8))
     return df_moves
 
@@ -262,8 +259,12 @@ def add_position_column(df_moves: pd.DataFrame) -> pd.DataFrame:
 
 
 @task(log_prints=True)
-def load_data() -> None:
-    print('Finish')
+def load_data_to_postgres(df: pd.DataFrame, table_name: str) -> None:
+    logger = get_run_logger()
+    engine = create_engine('postgresql://root:root@localhost:5432/chess')
+
+    df.to_sql(table_name, engine, if_exists='replace', chunksize=10_000)
+    logger.info(f'{len(df)} rows was loaded into {table_name}')
 
 
 @flow(name='ETL_chess', log_prints=True)
@@ -299,7 +300,8 @@ def main() -> None:
     df_moves = add_position_column(df_moves)
 
     # LOAD
-    load_data()
+    load_data_to_postgres(df, 'chess_games')
+    load_data_to_postgres(df_moves, 'chess_moves')
 
 
 if __name__ == '__main__':
