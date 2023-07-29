@@ -242,20 +242,20 @@ def add_position_column(df_moves: pd.DataFrame) -> pd.DataFrame:
 
 
 @task(log_prints=True)
-def load_data_to_postgres(df: pd.DataFrame, table_name: str) -> None:
+def load_data_to_postgres(df: pd.DataFrame, table_name: str, primary_key_name: str) -> None:
     logger = get_run_logger()
 
     database_block = SqlAlchemyConnector.load("postgres-chess")
     with database_block.get_connection(begin=False) as engine:
-        df.to_sql(table_name, engine, if_exists='replace', chunksize=10_000)
+        df.to_sql(table_name, engine, if_exists='replace', index_label=primary_key_name, chunksize=10_000)
     
     logger.info(f'{len(df)} rows was loaded into {table_name}')
 
 
 @task(log_prints=True)
-def load_data_to_csv(df: pd.DataFrame, file_name: str) -> None:
+def load_data_to_csv(df: pd.DataFrame, file_name: str, primary_key_name: str) -> None:
     logger = get_run_logger()
-    df.to_csv(file_name)
+    df.to_csv(file_name, index_label=primary_key_name)
     logger.info(f'{len(df)} rows was loaded into {file_name}')
 
 
@@ -292,11 +292,11 @@ def main() -> None:
     df_moves = add_position_column(df_moves)
 
     # LOAD
-    # load_data_to_postgres(df, 'chess_games')
-    # load_data_to_postgres(df_moves, 'chess_moves')
+    load_data_to_postgres(df, 'chess_games', 'game_id')
+    load_data_to_postgres(df_moves, 'chess_moves', 'move_id')
 
-    load_data_to_csv(df, 'tableau_chess_games.csv')
-    load_data_to_csv(df_moves, 'tableau_chess_moves.csv')
+    load_data_to_csv(df, 'tableau_chess_games.csv', 'game_id')
+    load_data_to_csv(df_moves, 'tableau_chess_moves.csv', 'move_id')
 
     '''
     bigquery_load_file is build-in prefect task, so I decided to call it here
