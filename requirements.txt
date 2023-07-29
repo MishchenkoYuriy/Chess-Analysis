@@ -1,4 +1,5 @@
 pandas==2.0.3
 prefect==2.10.21
-prefect-gcp==0.4.5
 psycopg2-binary==2.9.5
+prefect-sqlalchemy==0.2.4
+prefect-gcp==0.4.5

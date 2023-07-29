@@ -5,6 +5,7 @@ from sqlalchemy import create_engine
 
 from prefect import flow, task, get_run_logger
 # from prefect.tasks import task_input_hash
+from prefect_sqlalchemy import SqlAlchemyConnector
 
 
 temp_moves_total = []
@@ -13,7 +14,7 @@ temp_moves_total = []
 @task(log_prints=True) # cache_key_fn=task_input_hash, cache_expiration=timedelta(days=1))
 def extract_data() -> pd.DataFrame:
     logger = get_run_logger()
-    df = pd.read_csv('chess_games.csv', nrows=1000,
+    df = pd.read_csv('chess_games.csv', nrows=10,
                     usecols=['Event', 'Result', 'UTCDate', 'Opening', 'Termination', 'AN'])
     logger.info(f"{len(df)} rows was extracted")
     return df
@@ -261,9 +262,11 @@ def add_position_column(df_moves: pd.DataFrame) -> pd.DataFrame:
 @task(log_prints=True)
 def load_data_to_postgres(df: pd.DataFrame, table_name: str) -> None:
     logger = get_run_logger()
-    engine = create_engine('postgresql://root:root@localhost:5432/chess')
 
-    df.to_sql(table_name, engine, if_exists='replace', chunksize=10_000)
+    database_block = SqlAlchemyConnector.load("postgres-chess")
+    with database_block.get_connection(begin=False) as engine:
+        df.to_sql(table_name, engine, if_exists='replace', chunksize=10_000)
+    
     logger.info(f'{len(df)} rows was loaded into {table_name}')
 
 
