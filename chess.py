@@ -14,7 +14,7 @@ temp_moves_total = []
 @task(log_prints=True) # cache_key_fn=task_input_hash, cache_expiration=timedelta(days=1))
 def extract_data() -> pd.DataFrame:
     logger = get_run_logger()
-    df = pd.read_csv('chess_games.csv', nrows=10,
+    df = pd.read_csv('chess_games.csv', nrows=10000,
                     usecols=['Event', 'Result', 'UTCDate', 'Opening', 'Termination', 'AN'])
     logger.info(f"{len(df)} rows was extracted")
     return df
@@ -270,6 +270,13 @@ def load_data_to_postgres(df: pd.DataFrame, table_name: str) -> None:
     logger.info(f'{len(df)} rows was loaded into {table_name}')
 
 
+@task(log_prints=True)
+def load_data_to_csv(df: pd.DataFrame, file_name: str) -> None:
+    logger = get_run_logger()
+    df.to_csv(file_name)
+    logger.info(f'{len(df)} rows was loaded into {file_name}')
+
+
 @flow(name='ETL_chess', log_prints=True)
 def main() -> None:
     # EXTRACT
@@ -303,8 +310,11 @@ def main() -> None:
     df_moves = add_position_column(df_moves)
 
     # LOAD
-    load_data_to_postgres(df, 'chess_games')
-    load_data_to_postgres(df_moves, 'chess_moves')
+    # load_data_to_postgres(df, 'chess_games')
+    # load_data_to_postgres(df_moves, 'chess_moves')
+
+    load_data_to_csv(df, 'tableau_chess_games.csv')
+    load_data_to_csv(df_moves, 'tableau_chess_moves.csv')
 
 
 if __name__ == '__main__':
