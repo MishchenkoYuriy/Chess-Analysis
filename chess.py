@@ -311,12 +311,13 @@ def main() -> None:
     load_data_to_csv(df_moves, 'tableau_chess_moves.csv', 'move_id')
 
     '''
+    https://prefecthq.github.io/prefect-gcp/bigquery/
     bigquery_load_file is build-in prefect task, so I decided to call it here
     alternatively, you can run it inside other tasks by using 'bigquery_load_file.fn'
     '''
-    gcp_credentials = GcpCredentials.load("gcp-cred")
-    bigquery_load_file(dataset = "marts", table = 'chess_games', path = 'tableau_chess_games.csv', gcp_credentials = gcp_credentials)
-    bigquery_load_file(dataset = "marts", table = 'chess_moves', path = 'tableau_chess_moves.csv', gcp_credentials = gcp_credentials)
+    gcp_credentials = GcpCredentials.load('gcp-cred-chess')
+    bigquery_load_file(dataset = 'marts', location = 'europe-west1', table = 'chess_games', path = 'tableau_chess_games.csv', gcp_credentials = gcp_credentials)
+    bigquery_load_file(dataset = 'marts', location = 'europe-west1', table = 'chess_moves', path = 'tableau_chess_moves.csv', gcp_credentials = gcp_credentials)
 
 
 if __name__ == '__main__':
