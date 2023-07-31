@@ -16,7 +16,7 @@ temp_moves_total = []
 @task(log_prints=True) # cache_key_fn=task_input_hash, cache_expiration=timedelta(days=1))
 def extract_data() -> pd.DataFrame:
     logger = get_run_logger()
-    df = pd.read_csv('chess_games.csv', nrows=10000,
+    df = pd.read_csv('chess_games.csv', nrows=800_000,
                     usecols=['Event', 'Result', 'UTCDate', 'Opening', 'Termination', 'AN'])
     logger.info(f"{len(df)} rows was extracted")
     return df
@@ -27,7 +27,7 @@ def extract_data_by_chunks() -> pd.DataFrame:
     logger = get_run_logger()
     chess_game_list = []
     chunksize = 50000
-    for chunk in pd.read_csv('chess_games.csv', nrows=500_000, chunksize=chunksize, usecols=['Event', 'Result', 'UTCDate', 'Opening', 'Termination', 'AN']):
+    for chunk in pd.read_csv('chess_games.csv', nrows=800_000, chunksize=chunksize, usecols=['Event', 'Result', 'UTCDate', 'Opening', 'Termination', 'AN']):
         chess_game_list.append(chunk)
     df = pd.concat(chess_game_list)
     logger.info(f"{len(chess_game_list)*chunksize} rows was extracted")
@@ -71,6 +71,17 @@ def remove_rare_openings(df: pd.DataFrame) -> pd.DataFrame:
     vals_to_remove = vc[vc < 1500].index.values
     df['Opening'].loc[df['Opening'].isin(vals_to_remove)] = 'REMOVE'
     filt = df['Opening'] != 'REMOVE'
+    logger.info(f"{len(df)-len(df[filt])} rows was removed")
+    df = df[filt]
+    logger.info(f"{len(df)} rows left")
+    return df
+
+
+@task(log_prints=True)
+def remove_long_games(df: pd.DataFrame) -> pd.DataFrame:
+    logger = get_run_logger()
+    # filt = df['AN'].str.len() <= 540
+    filt = df["AN"].apply(len) <= 540
     logger.info(f"{len(df)-len(df[filt])} rows was removed")
     df = df[filt]
     logger.info(f"{len(df)} rows left")
@@ -269,7 +280,8 @@ def main() -> None:
     df = remove_ambiguous_results(df)
     df = remove_short_games(df)
     df = remove_an_values(df)
-    # df = remove_rare_openings(df)
+    df = remove_rare_openings(df)
+    df = remove_long_games(df) # in order to meet 15 million rows limit of Tableau Public
 
     # expand and rearrange dataframe
     df = reset_df_index(df)
@@ -292,8 +304,8 @@ def main() -> None:
     df_moves = add_position_column(df_moves)
 
     # LOAD
-    load_data_to_postgres(df, 'chess_games', 'game_id')
-    load_data_to_postgres(df_moves, 'chess_moves', 'move_id')
+    # load_data_to_postgres(df, 'chess_games', 'game_id')
+    # load_data_to_postgres(df_moves, 'chess_moves', 'move_id')
 
     load_data_to_csv(df, 'tableau_chess_games.csv', 'game_id')
     load_data_to_csv(df_moves, 'tableau_chess_moves.csv', 'move_id')

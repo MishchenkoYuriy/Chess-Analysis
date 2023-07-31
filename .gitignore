@@ -1,6 +1,12 @@
 chess_postgres_data
 *.csv
 
+# Terraform
+*.tfstate
+*.tfstate.*
+**.terraform
+**.terraform.lock.*
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
