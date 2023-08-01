@@ -16,7 +16,7 @@ temp_moves_total = []
 @task(log_prints=True) # cache_key_fn=task_input_hash, cache_expiration=timedelta(days=1))
 def extract_data() -> pd.DataFrame:
     logger = get_run_logger()
-    df = pd.read_csv('chess_games.csv', nrows=800_000,
+    df = pd.read_csv('data/chess_games.csv', nrows=800_000,
                     usecols=['Event', 'Result', 'UTCDate', 'Opening', 'Termination', 'AN'])
     logger.info(f"{len(df)} rows was extracted")
     return df
@@ -27,7 +27,8 @@ def extract_data_by_chunks() -> pd.DataFrame:
     logger = get_run_logger()
     chess_game_list = []
     chunksize = 50000
-    for chunk in pd.read_csv('chess_games.csv', nrows=800_000, chunksize=chunksize, usecols=['Event', 'Result', 'UTCDate', 'Opening', 'Termination', 'AN']):
+    for chunk in pd.read_csv('data/chess_games.csv', nrows=800_000,
+                            chunksize=chunksize, usecols=['Event', 'Result', 'UTCDate', 'Opening', 'Termination', 'AN']):
         chess_game_list.append(chunk)
     df = pd.concat(chess_game_list)
     logger.info(f"{len(chess_game_list)*chunksize} rows was extracted")
@@ -307,8 +308,8 @@ def main() -> None:
     # load_data_to_postgres(df, 'chess_games', 'game_id')
     # load_data_to_postgres(df_moves, 'chess_moves', 'move_id')
 
-    load_data_to_csv(df, 'tableau_chess_games.csv', 'game_id')
-    load_data_to_csv(df_moves, 'tableau_chess_moves.csv', 'move_id')
+    load_data_to_csv(df, 'data/tableau_chess_games.csv', 'game_id')
+    load_data_to_csv(df_moves, 'data/tableau_chess_moves.csv', 'move_id')
 
     '''
     https://prefecthq.github.io/prefect-gcp/bigquery/
@@ -316,8 +317,11 @@ def main() -> None:
     alternatively, you can run it inside other tasks by using 'bigquery_load_file.fn'
     '''
     gcp_credentials = GcpCredentials.load('gcp-cred-chess')
-    bigquery_load_file(dataset = 'marts', location = 'europe-west1', table = 'chess_games', path = 'tableau_chess_games.csv', gcp_credentials = gcp_credentials)
-    bigquery_load_file(dataset = 'marts', location = 'europe-west1', table = 'chess_moves', path = 'tableau_chess_moves.csv', gcp_credentials = gcp_credentials)
+    bigquery_load_file(dataset = 'marts', location = 'europe-west1', table = 'chess_games',
+                       path = 'data/tableau_chess_games.csv', gcp_credentials = gcp_credentials)
+    
+    bigquery_load_file(dataset = 'marts', location = 'europe-west1', table = 'chess_moves',
+                       path = 'data/tableau_chess_moves.csv', gcp_credentials = gcp_credentials)
 
 
 if __name__ == '__main__':
