@@ -15,6 +15,29 @@ models:
         - accepted_values:
             values: ['Classical', 'Blitz', 'Bullet']
             severity: warn
+    
+    - name: result
+      tests:
+        - not_null
+        - accepted_values:
+            values: ['1-0', '0-1', '1/2-1/2']
+            severity: warn
+
+    - name: opening
+      tests:
+        - not_null
+
+    - name: termination
+      tests:
+        - accepted_values:
+            values: ['Normal', 'Time forfeit']
+            severity: warn
+    
+    - name: tournament
+      tests:
+        - not_null
+
+
 
   - name: stg__chess_moves
     columns:
@@ -29,4 +52,50 @@ models:
           - relationships:
                 to: ref('stg__chess_games')
                 field: game_id
-                
+      
+      - name: move_num
+        tests:
+          - not_null
+      
+      - name: player
+        tests:
+          - not_null
+          - accepted_values:
+              values: [1, 2]
+              quote: false
+
+      - name: move
+        tests:
+          - not_null
+      
+      - name: castling
+        tests:
+          - not_null
+          - accepted_values:
+              values: [0, 1, 2]
+              quote: false
+      
+      - name: piece_name
+        tests:
+          - not_null
+          - accepted_values:
+              values: [1, 2, 3, 4, 5, 6]
+              quote: false
+
+      - name: capture
+        tests:
+          - not_null
+
+      - name: pawn_promotion
+        tests:
+          - not_null
+          - accepted_values:
+              values: [0, 2, 3, 4, 5]
+              quote: false
+
+      - name: position
+        tests:
+          - not_null
+          - accepted_values:
+              values: [0, 1, 2]
+              quote: false
