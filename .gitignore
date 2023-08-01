@@ -1,6 +1,11 @@
 chess_postgres_data
 *.csv
 
+# dbt Cloud
+dbt/target/
+dbt/dbt_packages/
+dbt/logs/
+
 # Terraform
 *.tfstate
 *.tfstate.*
