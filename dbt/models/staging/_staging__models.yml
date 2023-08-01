@@ -15,7 +15,7 @@ models:
         - accepted_values:
             values: ['Classical', 'Blitz', 'Bullet']
             severity: warn
-    
+
     - name: result
       tests:
         - not_null
@@ -32,7 +32,7 @@ models:
         - accepted_values:
             values: ['Normal', 'Time forfeit']
             severity: warn
-    
+
     - name: tournament
       tests:
         - not_null
@@ -45,46 +45,71 @@ models:
         tests:
           - unique
           - not_null
-      
+
       - name: game_id
         tests:
           - not_null
           - relationships:
                 to: ref('stg__chess_games')
                 field: game_id
-      
+
       - name: move_num
         tests:
           - not_null
-      
+
+
       - name: player
         tests:
           - not_null
           - accepted_values:
               values: [1, 2]
               quote: false
+          - name: first_move_is_not_black
+            tags: [custom]
+            test_name: accepted_values
+            values: [1]
+            quote: false
+            where: 'move_num = 1'
 
       - name: move
         tests:
           - not_null
-      
+
       - name: castling
         tests:
           - not_null
           - accepted_values:
               values: [0, 1, 2]
               quote: false
-      
+          - name: castling_made_by_not_a_king
+            tags: [custom]
+            test_name: accepted_values
+            values: [0]
+            quote: false
+            where: 'piece_name <> 1'
+
       - name: piece_name
         tests:
           - not_null
           - accepted_values:
               values: [1, 2, 3, 4, 5, 6]
               quote: false
+          - name: first_move_by_king_queen_rook_or_bishop
+            tags: [custom]
+            test_name: accepted_values
+            values: [5, 6]
+            quote: false
+            where: 'move_num = 1'
 
       - name: capture
         tests:
           - not_null
+          - name: capture_with_castling
+            tags: [custom]
+            test_name: accepted_values
+            values: [false]
+            quote: false
+            where: 'castling <> 0'
 
       - name: pawn_promotion
         tests:
@@ -92,6 +117,12 @@ models:
           - accepted_values:
               values: [0, 2, 3, 4, 5]
               quote: false
+          - name: pawn_promotion_made_by_not_a_pawn
+            tags: [custom]
+            test_name: accepted_values
+            values: [0]
+            quote: false
+            where: 'piece_name <> 6'
 
       - name: position
         tests:
@@ -99,3 +130,11 @@ models:
           - accepted_values:
               values: [0, 1, 2]
               quote: false
+          - name: check_or_mate_made_by_a_king
+            tags: [custom]
+            test_name: accepted_values
+            values: [0]
+            quote: false
+            where: 'piece_name = 1 and casling = 0'
+            # severity: warn
+
