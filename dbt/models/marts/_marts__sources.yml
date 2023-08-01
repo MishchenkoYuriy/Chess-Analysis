@@ -1,0 +1,9 @@
+
+version: 2
+
+sources:
+  - name: chess_marts
+    schema: marts
+    tables:
+      - name: chess_games
+      - name: chess_moves
