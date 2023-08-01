@@ -1,2 +1,32 @@
 
 version: 2
+
+models:
+  - name: stg__chess_games
+    columns:
+    - name: game_id
+      tests:
+        - unique
+        - not_null
+
+    - name: event
+      tests:
+        - not_null
+        - accepted_values:
+            values: ['Classical', 'Blitz', 'Bullet']
+            severity: warn
+
+  - name: stg__chess_moves
+    columns:
+      - name: move_id
+        tests:
+          - unique
+          - not_null
+      
+      - name: game_id
+        tests:
+          - not_null
+          - relationships:
+                to: ref('stg__chess_games')
+                field: game_id
+                
