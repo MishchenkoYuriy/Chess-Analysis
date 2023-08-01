@@ -8,6 +8,7 @@ models:
       tests:
         - unique
         - not_null
+        - tableau_row_limit
 
     - name: event
       tests:
@@ -40,11 +41,16 @@ models:
 
 
   - name: stg__chess_moves
+    tests:
+      - capture_limit_total
+      - capture_limit_per_player
+      - pawn_promotion_limit_total
     columns:
       - name: move_id
         tests:
           - unique
           - not_null
+          - tableau_row_limit
 
       - name: game_id
         tests:
