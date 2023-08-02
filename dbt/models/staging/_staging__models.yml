@@ -45,6 +45,7 @@ models:
       - capture_limit_total
       - pawn_promotion_limit_total
       - castling_limit_total
+      - checkmate_is_last_move
     columns:
       - name: move_id
         tests:
@@ -134,6 +135,7 @@ models:
       - name: position
         tests:
           - not_null
+          - one_checkmate_per_game
           - accepted_values:
               values: [0, 1, 2]
               quote: false
