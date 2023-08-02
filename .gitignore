@@ -1,5 +1,5 @@
 chess_postgres_data
-*.csv
+data/
 
 # dbt Cloud
 dbt/target/
@@ -148,5 +148,5 @@ dmypy.json
 
 # Big files
 *.parquet
-*.csv
+# *.csv
 *.json
