@@ -43,7 +43,6 @@ models:
   - name: stg__chess_moves
     tests:
       - capture_limit_total
-      - capture_limit_per_player
       - pawn_promotion_limit_total
       - castling_limit_total
     columns:
@@ -111,6 +110,7 @@ models:
       - name: capture
         tests:
           - not_null
+          - capture_limit_per_player
           - name: capture_with_castling
             tags: [custom]
             test_name: accepted_values
@@ -145,4 +145,82 @@ models:
             where: 'piece_name = 1 and casling = 0'
             # severity: warn
 
-  - name: mirror_castling
+
+  - name: stg__mirror_castling
+    columns:
+      - name: game_id
+        tests:
+          - unique
+          - not_null
+
+      - name: move_num
+        tests:
+          - not_null
+
+      - name: player
+        tests:
+          - not_null
+          - accepted_values:
+              values: [1, 2]
+              quote: false
+
+      - name: castling
+        tests:
+          - not_null
+          - accepted_values:
+              values: [1, 2]
+              quote: false
+
+      - name: next_move_num
+        tests:
+          - not_null
+
+      - name: next_player
+        tests:
+          - not_null
+          - accepted_values:
+              values: [1, 2]
+              quote: false
+      
+      - name: next_castling
+        tests:
+          - not_null
+          - accepted_values:
+              values: [1, 2]
+              quote: false
+
+
+  - name: stg__win_with_less_captures
+    columns:
+      - name: game_id
+        tests:
+          - unique
+          - not_null
+
+      - name: event
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Classical', 'Blitz', 'Bullet']
+              severity: warn
+
+      - name: result
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['1-0', '0-1', '1/2-1/2']
+              severity: warn
+
+      - name: opening
+        tests:
+          - not_null
+      
+      - name: termination
+        tests:
+          - accepted_values:
+              values: ['Normal', 'Time forfeit']
+              severity: warn
+
+      - name: tournament
+        tests:
+          - not_null

@@ -1,4 +1,4 @@
-{% test capture_limit_per_player(model) %}
+{% test capture_limit_per_player(model, column_name) %}
 
 
 with
@@ -10,11 +10,11 @@ validation as (
 
 validation_errors as (
 
-    select game_id, player, count(capture)
+    select game_id, player, count( {{ column_name }} )
     from validation
-    where capture is true
+    where {{ column_name }} is true
     group by game_id, player
-    having count(capture) > 15
+    having count( {{ column_name }} ) > 15
 )
 
 
