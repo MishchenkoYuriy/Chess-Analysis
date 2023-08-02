@@ -142,8 +142,8 @@ models:
             test_name: accepted_values
             values: [0]
             quote: false
-            where: 'piece_name = 1 and casling = 0'
-            # severity: warn
+            where: 'piece_name = 1 and castling = 0'
+            severity: warn
 
 
   - name: stg__mirror_castling
