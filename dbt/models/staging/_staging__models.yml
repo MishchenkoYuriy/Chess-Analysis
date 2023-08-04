@@ -45,6 +45,7 @@ models:
       - capture_limit_total
       - pawn_promotion_limit_total
       - castling_limit_total
+      - checkmate_is_last_move
     columns:
       - name: move_id
         tests:
@@ -134,6 +135,7 @@ models:
       - name: position
         tests:
           - not_null
+          - one_checkmate_per_game
           - accepted_values:
               values: [0, 1, 2]
               quote: false
@@ -142,8 +144,8 @@ models:
             test_name: accepted_values
             values: [0]
             quote: false
-            where: 'piece_name = 1 and casling = 0'
-            # severity: warn
+            where: 'piece_name = 1 and castling = 0'
+            severity: warn
 
 
   - name: stg__mirror_castling
@@ -224,3 +226,29 @@ models:
       - name: tournament
         tests:
           - not_null
+
+  
+  - name: stg__last_move
+    tests:
+      - dbt_utils.equal_rowcount:
+          compare_model: ref('stg__chess_games')
+    columns:
+      - name: game_id
+        tests:
+          - unique
+          - not_null
+
+      - name: game_length
+        tests:
+          - not_null
+
+      - name: move
+        tests:
+          - not_null
+
+      - name: piece_name
+        tests:
+          - not_null
+          - accepted_values:
+              values: [1, 2, 3, 4, 5, 6]
+              quote: false
