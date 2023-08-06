@@ -24,3 +24,12 @@ The dataset contains 6.25 million chess games played on [lichess.org](https://li
 - Data transformation: `pandas`, `dbt cloud`
 - Data warehouse: `BigQuery`
 - Visualisation: `Tableau`
+
+## Dashboard
+Link: https://public.tableau.com/views/ChessAnalytics/1_PieceUsage
+
+<img src="images/chess_dashboard1.png">
+
+<img src="images/chess_dashboard2.png">
+
+<img src="images/chess_dashboard3.png">
