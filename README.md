@@ -1,5 +1,5 @@
 ## Project Description
-This project is an ETL pipeline with dbt tuning designed for complex chess analytics. The steps include:
+This project is an ETL pipeline with dbt tuning designed for complex chess analysis. The steps include:
 - Extract the chess game data from a csv file
 - Filter, clean, reshape the dataframe with pandas
 - Parse the [chess notation](https://en.wikipedia.org/wiki/Algebraic_notation_(chess)) field into a new dataframe
