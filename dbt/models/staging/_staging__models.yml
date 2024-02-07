@@ -3,14 +3,19 @@ version: 2
 
 models:
   - name: stg__chess_games
+    config:
+      contract:
+        enforced: true
     columns:
     - name: game_id
+      data_type: int64
       tests:
         - unique
         - not_null
         - tableau_row_limit
 
     - name: event
+      data_type: string
       tests:
         - not_null
         - accepted_values:
@@ -18,6 +23,7 @@ models:
             severity: warn
 
     - name: result
+      data_type: string
       tests:
         - not_null
         - accepted_values:
@@ -25,22 +31,28 @@ models:
             severity: warn
 
     - name: opening
+      data_type: string
       tests:
         - not_null
 
     - name: termination
+      data_type: string
       tests:
         - accepted_values:
             values: ['Normal', 'Time forfeit']
             severity: warn
 
     - name: tournament
+      data_type: bool
       tests:
         - not_null
 
 
 
   - name: stg__chess_moves
+    config:
+      contract:
+        enforced: true
     tests:
       - capture_limit_total
       - pawn_promotion_limit_total
@@ -48,12 +60,14 @@ models:
       - checkmate_is_last_move
     columns:
       - name: move_id
+        data_type: int64
         tests:
           - unique
           - not_null
           - tableau_row_limit
 
       - name: game_id
+        data_type: int64
         tests:
           - not_null
           - relationships:
@@ -61,11 +75,12 @@ models:
                 field: game_id
 
       - name: move_num
+        data_type: int64
         tests:
           - not_null
 
-
       - name: player
+        data_type: int64
         tests:
           - not_null
           - accepted_values:
@@ -79,10 +94,12 @@ models:
             where: 'move_num = 1'
 
       - name: move
+        data_type: string
         tests:
           - not_null
 
       - name: castling
+        data_type: int64
         tests:
           - not_null
           - accepted_values:
@@ -96,6 +113,7 @@ models:
             where: 'piece_name <> 1'
 
       - name: piece_name
+        data_type: int64
         tests:
           - not_null
           - accepted_values:
@@ -109,6 +127,7 @@ models:
             where: 'move_num = 1'
 
       - name: capture
+        data_type: bool
         tests:
           - not_null
           - capture_limit_per_player
@@ -120,6 +139,7 @@ models:
             where: 'castling <> 0'
 
       - name: pawn_promotion
+        data_type: int64
         tests:
           - not_null
           - accepted_values:
@@ -133,6 +153,7 @@ models:
             where: 'piece_name <> 6'
 
       - name: position
+        data_type: int64
         tests:
           - not_null
           - one_checkmate_per_game
@@ -149,17 +170,23 @@ models:
 
 
   - name: stg__mirror_castling
+    config:
+      contract:
+        enforced: true
     columns:
       - name: game_id
+        data_type: int64
         tests:
           - unique
           - not_null
 
       - name: move_num
+        data_type: int64
         tests:
           - not_null
 
       - name: player
+        data_type: int64
         tests:
           - not_null
           - accepted_values:
@@ -167,6 +194,7 @@ models:
               quote: false
 
       - name: castling
+        data_type: int64
         tests:
           - not_null
           - accepted_values:
@@ -174,10 +202,12 @@ models:
               quote: false
 
       - name: next_move_num
+        data_type: int64
         tests:
           - not_null
 
       - name: next_player
+        data_type: int64
         tests:
           - not_null
           - accepted_values:
@@ -185,6 +215,7 @@ models:
               quote: false
       
       - name: next_castling
+        data_type: int64
         tests:
           - not_null
           - accepted_values:
@@ -193,13 +224,18 @@ models:
 
 
   - name: stg__win_with_less_captures
+    config:
+      contract:
+        enforced: true
     columns:
       - name: game_id
+        data_type: int64
         tests:
           - unique
           - not_null
 
       - name: event
+        data_type: string
         tests:
           - not_null
           - accepted_values:
@@ -207,6 +243,7 @@ models:
               severity: warn
 
       - name: result
+        data_type: string
         tests:
           - not_null
           - accepted_values:
@@ -214,36 +251,46 @@ models:
               severity: warn
 
       - name: opening
+        data_type: string
         tests:
           - not_null
       
       - name: termination
+        data_type: string
         tests:
           - accepted_values:
               values: ['Normal', 'Time forfeit']
               severity: warn
 
       - name: tournament
+        data_type: bool
         tests:
           - not_null
 
   
   - name: stg__last_move
+    config:
+      contract:
+        enforced: true
     columns:
       - name: game_id
+        data_type: int64
         tests:
           - unique
           - not_null
 
       - name: game_length
+        data_type: int64
         tests:
           - not_null
 
       - name: move
+        data_type: string
         tests:
           - not_null
 
       - name: piece_name
+        data_type: int64
         tests:
           - not_null
           - accepted_values:

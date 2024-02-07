@@ -1,0 +1,54 @@
+# https://docs.sqlfluff.com/en/stable/configuration.html#default-configuration
+
+[sqlfluff]
+# verbose is an integer (0-2) indicating the level of log output
+verbose = 1
+templater = dbt
+max_line_length = 80
+exclude_rules = structure.column_order
+
+[sqlfluff:indentation]
+indent_unit = space
+tab_space_size = 4
+
+# aliasing
+
+[sqlfluff:rules:aliasing.table]
+# table aliases should not have an explicit AS
+aliasing = implicit
+
+[sqlfluff:rules:aliasing.column]
+# column aliases should have an explicit AS
+aliasing = explicit
+
+[sqlfluff:rules:aliasing.expression]
+# Whether or not to allow a single element in the select clause to be without an alias
+allow_scalar = True
+
+# ambiguous
+
+[sqlfluff:rules:ambiguous.join]
+fully_qualify_join_types = both
+
+[sqlfluff:rules:ambiguous.column_references]
+# Use explicit column name references in group by and order by (no numbers)
+group_by_and_order_by_style = explicit
+
+# capitalisation
+
+[sqlfluff:rules:capitalisation.keywords]
+capitalisation_policy = lower
+
+[sqlfluff:rules:capitalisation.identifiers]
+extended_capitalisation_policy = lower
+
+[sqlfluff:rules:capitalisation.functions]
+# capitalisation of function names such as sum, max, count
+extended_capitalisation_policy = lower
+
+[sqlfluff:rules:capitalisation.literals]
+# capitalisation of boolean/null literal
+capitalisation_policy = lower
+
+[sqlfluff:rules:capitalisation.types]
+extended_capitalisation_policy = lower
